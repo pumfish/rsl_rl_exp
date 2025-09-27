@@ -202,7 +202,8 @@ class PPO:
         if self.policy.is_recurrent:
             generator = self.storage.recurrent_mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
         else:
-            generator = self.storage.mini_batch_generator(self.num_mini_batches, self.num_learning_epochs)
+            # replace the "mini_batch_gnerator" with "ablation_chunk_mini_batch_generator" and chunk_size=1
+            generator = self.storage.ablation_chunk_mini_batch_generator(self.num_mini_batches, self.num_learning_epochs, chunk_size=1)
 
         # iterate over batches
         for (
@@ -219,6 +220,25 @@ class PPO:
             masks_batch,
             rnd_state_batch,
         ) in generator:
+
+            # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            # flatten the obs from (T, B, *dim) to (T * B, *dim)
+            obs_batch = obs_batch.flatten(0, 1)
+            critic_obs_batch = critic_obs_batch.flatten(0, 1)
+            critic_obs_batch = critic_obs_batch.flatten(0, 1)
+            actions_batch = actions_batch.flatten(0, 1)
+            actions_batch = actions_batch.flatten(0, 1)
+            target_values_batch = target_values_batch.flatten(0, 1)
+            advantages_batch = advantages_batch.flatten(0, 1)
+            returns_batch = returns_batch.flatten(0, 1)
+            old_actions_log_prob_batch = old_actions_log_prob_batch.flatten(0, 1)
+            old_mu_batch = old_mu_batch.flatten(0, 1)
+            old_sigma_batch = old_sigma_batch.flatten(0, 1)
+            # below may be None
+            hid_states_batch = hid_states_batch.flatten(0, 1) if hid_states_batch is not None else None
+            masks_batch = masks_batch.flatten(0, 1) if masks_batch is not None else None
+            rnd_state_batch = rnd_state_batch.flatten(0, 1) if rnd_state_batch is not None else None
+            # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
             # number of augmentations per sample
             # we start with 1 and increase it if we use symmetry augmentation

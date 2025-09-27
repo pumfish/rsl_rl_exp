@@ -110,8 +110,12 @@ class ActorCriticRL2(ActorCritic):
             pass
         input_a = torch.cat([observations, prev_actions], dim=-1)
         input_a = self.memory_a(input_a, masks, hidden_states)
-        mlp_a_input = torch.cat([input_a.squeeze(0), observations], dim=-1)
-        return super().act(mlp_a_input)
+        if observations.dim() == 3 and observations.shape[0] == 1:
+            pass  # input_a.shape = [1, B, D] and dont need squeeze
+        else:
+            input_a = input_a.squeeze(0)
+        mlp_a_input = torch.cat([input_a, observations], dim=-1)
+        return super().act(observations)
 
     # 脚本训练过程用不到，应该不影响训练，暂时不修改
     def act_inference(self, observations, prev_actions):
@@ -123,8 +127,12 @@ class ActorCriticRL2(ActorCritic):
         input_c = torch.cat([critic_observations, prev_action], dim=-1)
         # actor和critic共用一个RNN
         input_c = self.memory_a(input_c, masks, hidden_states)
-        mlp_c_input = torch.cat([input_c.squeeze(0), critic_observations], dim=-1)
-        return super().evaluate(mlp_c_input)
+        if critic_observations.dim() == 3 and critic_observations.shape[0] == 1:
+            pass  # input_a.shape = [1, B, D] and dont need squeeze
+        else:
+            input_c = input_c.squeeze(0)
+        mlp_c_input = torch.cat([input_c, critic_observations], dim=-1)
+        return super().evaluate(critic_observations)
 
     # # 我们改成critic和actor使用同一个RNN，输入相同context和obs拼接
     # def evaluate(self, observations, prev_actions, masks=None, hidden_states=None):

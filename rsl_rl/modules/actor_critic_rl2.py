@@ -50,8 +50,8 @@ class ActorCriticRL2(ActorCritic):
 
         # ActorCritic base expects num_actor_obs = rnn_hidden_dim
         super().__init__(
-            num_actor_obs=rnn_hidden_dim + num_actor_obs,   # 现在的实验条件默认critic_obs=actor_obs
-            num_critic_obs=rnn_hidden_dim + num_critic_obs,
+            num_actor_obs=num_actor_obs,   # 现在的实验条件默认critic_obs=actor_obs
+            num_critic_obs=num_critic_obs,
             num_actions=num_actions,
             actor_hidden_dims=actor_hidden_dims,
             critic_hidden_dims=critic_hidden_dims,

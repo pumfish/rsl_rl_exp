@@ -63,14 +63,14 @@ class ActorCriticRL2(ActorCritic):
 
         # Actor RNN input = obs + prev_action
         self.memory_a = Memory(
-            input_size=num_actor_obs+num_actions,
+            input_size=num_actor_obs, #+num_actions,
             type=rnn_type,
             num_layers=rnn_num_layers,
             hidden_size=rnn_hidden_dim,
         )
         # Critic RNN input = critic_obs + prev_action
         self.memory_c = Memory(
-            input_size=num_critic_obs+num_actions,
+            input_size=num_critic_obs, #+num_actions,
             type=rnn_type,
             num_layers=rnn_num_layers,
             hidden_size=rnn_hidden_dim,
@@ -105,12 +105,12 @@ class ActorCriticRL2(ActorCritic):
     #         masked_obs = observations  # (num_envs, obs_dim)
     #     return super().act(masked_obs)
 
-    def act(self, observations, prev_actions, masks=None, hidden_states=None):
-        if masks is not None:
-            pass
-        input_a = torch.cat([observations, prev_actions], dim=-1)
-        input_a = self.memory_a(input_a, masks, hidden_states)
-        mlp_a_input = torch.cat([input_a.squeeze(0), observations], dim=-1)
+    def act(self, observations, prev_actions=None, masks=None, hidden_states=None):
+        # if masks is not None:
+        #     pass
+        # input_a = torch.cat([observations, prev_actions], dim=-1)
+        input_a = self.memory_a(observations, masks, hidden_states)
+        mlp_a_input = torch.cat([observations, input_a.squeeze(0)], dim=-1)
         return super().act(mlp_a_input)
 
     # 脚本训练过程用不到，应该不影响训练，暂时不修改
@@ -119,11 +119,12 @@ class ActorCriticRL2(ActorCritic):
         input_a = self.memory_a(input_a)
         return super().act_inference(input_a.squeeze(0))
 
-    def evaluate(self, critic_observations, prev_action, masks=None, hidden_states=None):
-        input_c = torch.cat([critic_observations, prev_action], dim=-1)
-        # actor和critic共用一个RNN
-        input_c = self.memory_a(input_c, masks, hidden_states)
-        mlp_c_input = torch.cat([input_c.squeeze(0), critic_observations], dim=-1)
+    def evaluate(self, critic_observations, prev_action=None, masks=None, hidden_states=None):
+        # input_c = torch.cat([critic_observations, prev_action], dim=-1)
+        # # actor和critic共用一个RNN
+        input_c = self.memory_a(critic_observations, masks, hidden_states)
+        # input_c = input_c.detach()
+        mlp_c_input = torch.cat([critic_observations, input_c.squeeze(0)], dim=-1)
         return super().evaluate(mlp_c_input)
 
     # # 我们改成critic和actor使用同一个RNN，输入相同context和obs拼接
